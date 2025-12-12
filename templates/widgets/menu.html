@@ -1,0 +1,26 @@
+<div class="bg-gray-800 p-4 mb-6 rounded-xl">
+    <h2 class="text-xl font-semibold mb-4">{{ menu.title }}</h2>
+
+    <form method="post" action="/menu_action">
+        <div class="space-y-3">
+            {% for c in menu.choices %}
+                <button 
+                    class="w-full text-left bg-gray-700 hover:bg-gray-600 p-3 rounded-lg"
+                    name="choice" value="{{ c.label }}"
+                >
+                {% if c.data %}
+                <table width="100%">
+                    <tr>
+                        <td width="50%"><div class="font-bold">{{ c.description }}</div></td>
+                        <td width="50%"><div class="text-gray-300 text-sm">{{ c.data }}</div></td>
+                     </tr>
+                </table>
+                {% else %}
+                    <div class="font-bold">{{ c.description }}</div>
+                {% endif %}
+                    
+                </button>
+            {% endfor %}
+        </div>
+    </form>
+</div>

@@ -1,0 +1,20 @@
+<div class="bg-gray-800 p-4 mb-6 rounded-xl">
+    <h2 class="text-xl font-semibold mb-4">{{ ti.title }}</h2>
+
+    <form method="post" action="/text_input_action">
+        <label class="block mb-2">{{ ti.prompt }}</label>
+
+        <input 
+            type="{{ 'text' if ti.visible else 'password' }}" 
+            name="value"
+            value="{{ ti.default }}"
+            class="w-full p-2 rounded bg-gray-700"
+        >
+
+        <button 
+            class="mt-4 px-4 py-2 bg-blue-700 hover:bg-blue-800 rounded-lg"
+        >
+            Envoyer
+        </button>
+    </form>
+</div>

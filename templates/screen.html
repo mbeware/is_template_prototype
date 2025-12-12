@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+    {% for config_item in config %}
+        {% set tb_index = loop.index %} 
+        {%set menu = config_item %}
+        {% include "widgets/menu.html" with context %}
+    {% endfor %}
+
+    {% for menu in menus %}
+        {% set tb_index = loop.index %} 
+        {% include "widgets/menu.html" with context %}
+    {% endfor %}
+
+    {% for ti in text_inputs %}
+        {% include "widgets/text_input.html"  with context %}
+    {% endfor %}
+
+    {% for tb in text_blocks %}
+        {% set tb_index = loop.index %} 
+        {% include "widgets/text_block.html"  with context %}
+    {% endfor %}
+
+{% endblock %}

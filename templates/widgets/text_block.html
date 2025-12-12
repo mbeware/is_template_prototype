@@ -1,0 +1,13 @@
+<pre id="tb_{{ tb_index }}" class="whitespace-pre-wrap">{{ tb.content }}</pre>
+
+{% if tb.auto_refresh %}
+<script>
+    setInterval(() => {
+        fetch("/refresh_block?index={{ tb_index }}")
+            .then(r => r.text())
+            .then(t => {
+                document.getElementById("tb_{{ tb_index }}").textContent = t;
+            });
+    }, 2000);
+</script>
+{% endif %}
