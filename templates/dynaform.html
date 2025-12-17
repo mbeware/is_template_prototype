@@ -1,0 +1,22 @@
+{% extends "dyn.base.html" %}
+
+{% block content %}
+    {% for widget in widgets %}
+        {% if widget.type == "Menu" %}
+            {% set menu = widget %}
+            {% include "widgets/dyn.menu.html" with context %}
+        {% elif widget.type == "Text_Input" %}
+            {% set ti = widget %}
+            {% include "widgets/dyn.text_input.html"  with context %}
+        {% elif widget.type == "Text_Block" %}
+            {% set tb = widget %}
+            {% set tb_index = widget.index %}
+            {% include "widgets/dyn.text_block.html"  with context %}
+        {% elif widget.type == "Config" %}
+            {% set config = widget %}   
+            {% include "widgets/dyn.config.html"  with context %}
+        {% else %}
+            {{ title }} ({{ formid }}) Unknown widget type({{ widget.type }}) : {{widget.name}}
+        {% endif %}
+    {% endfor %}
+{% endblock %}

@@ -1,6 +1,11 @@
 {% extends "base.html" %}
 
 {% block content %}
+    {% for service in services %}
+        {% set tb_index = loop.index %} 
+        {%set menu = service %}
+        {% include "widgets/menu.html" with context %}
+    {% endfor %}
 
     {% for config_item in config %}
         {% set tb_index = loop.index %} 

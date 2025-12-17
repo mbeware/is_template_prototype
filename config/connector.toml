@@ -1,7 +1,6 @@
+service_name = "demo2"
 fifo_path = "/tmp/serviceUI/register_service.fifo"
-
-title = "System Control Panel"
-subtitle = "Demo UI widgets for service webUI"
+serviceUIconnector_fifo_path = "/tmp/serviceUI/demo.fifo"
 
 [[config]]
 title = "Select config to change"
@@ -26,14 +25,12 @@ title = "Enter username"
 prompt = "Username"
 visible = true
 default = "john.doe"
-button = "Envoyer"
 
 [[text_input]]
 title = "Enter password"
 prompt = "Mot de passe"
 visible = false
 default = ""
-button = "Login"
 
 [[text_block]]
 title = "Live Logs"

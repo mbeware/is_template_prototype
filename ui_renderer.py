@@ -1,5 +1,7 @@
-def prepare_context(config):
+def prepare_context(config,registeredServices):
+    
     return {
+        "services": [registeredServices],
         "config": config.get("config", []),
         "title": config.get("title", ""),
         "subtitle": config.get("subtitle", ""),

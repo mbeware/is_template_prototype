@@ -2,6 +2,12 @@
     <h2 class="text-xl font-semibold mb-4">{{ ti.title }}</h2>
 
     <form method="post" action="/text_input_action">
+        <div class="space-y-3">
+            <input type="hidden" id="service" name="service" value={{ service }}>
+            <input type="hidden" id="formid" name="formid" value={{ formid }}>
+            <input type="hidden" id="widget_name" name="widget_name" value={{ ti.name }}>
+        </div>
+
         <label class="block mb-2">{{ ti.prompt }}</label>
 
         <input 

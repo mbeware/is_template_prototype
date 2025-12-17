@@ -1,12 +1,13 @@
 <div class="bg-gray-800 p-4 mb-6 rounded-xl">
-    <h2 class="text-xl font-semibold mb-4">{{ menu.title }}</h2>
+    <h2 class="text-xl font-semibold mb-4">{{ widget.title }}</h2>
 
     <form method="post" action="/menu_action">
         <div class="space-y-3">
-            <input type="hidden" id="service" name="service" value={{ menu.service }}>
-            <input type="hidden" id="formid" name="formid" value={{ menu.formid }}>
+            <input type="hidden" id="service" name="service" value={{ service }}>
+            <input type="hidden" id="formid" name="formid" value={{ formid }}>
+            <input type="hidden" id="widget_name" name="widget_name" value={{ widget.name }}>
 
-            {% for c in menu.choices %}
+            {% for c in widget.choices %}
                 <button 
                     class="w-full text-left bg-gray-700 hover:bg-gray-600 p-3 rounded-lg"
                     name="choice" value="{{ c.label }}"

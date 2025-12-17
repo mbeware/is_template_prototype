@@ -1,0 +1,21 @@
+   <form method="post" action="/text_bloc_action">
+        <div class="space-y-3">
+            <input type="hidden" id="service" name="service" value={{ service }}>
+            <input type="hidden" id="formid" name="formid" value={{ formid }}>
+            <input type="hidden" id="widget_name" name="widget_name" value={{ tb.name }}>
+        </div>
+    </form>
+
+<pre id="tb_{{ tb_index }}" class="whitespace-pre-wrap">{{ tb.content }}</pre>
+
+{% if tb.auto_refresh %}
+<script>
+    setInterval(() => {
+        fetch("/refresh_block?index={{ tb_index }}")
+            .then(r => r.text())
+            .then(t => {
+                document.getElementById("tb_{{ tb_index }}").textContent = t;
+            });
+    }, 2000);
+</script>
+{% endif %}
