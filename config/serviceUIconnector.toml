@@ -1,0 +1,2 @@
+fifo_path = "/tmp/serviceUI/register_service.fifo"
+serviceUIconnector_fifo_basepath = "/tmp/serviceUI/"

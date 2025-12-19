@@ -1,3 +1,4 @@
+from typing import Any
 import tomli as tomllib
 import threading
 
@@ -5,6 +6,7 @@ import os
 import tempfile
 from contextlib import contextmanager
 
+SERVICEUICONNECTION_CONFIG_PATH = "config/serviceUIconnector.toml"
 
 
 
@@ -30,13 +32,17 @@ class serviceUIconnector(threading.Thread):
             f.write(f'{{"service_name":"{service_name}","action":"Register","connectorFifoPath":"{connectorFifoPath}"}}')
         print(f"[Service '{service_name}' registered with connector fifo at '{connectorFifoPath}'")
         
-    def load_config(self,path:str|None=None):
+    def merge_configs(self,serviceConfig:dict[str,Any],formsConfig:dict[str,Any])->dict[str,Any]:
         # Load the configuration from a file or other source.
-        if not path:
-            path = "config/connector.toml"
-        with open(path, "rb") as f:
-            return tomllib.load(f)
+        config = {}
+        with open(SERVICEUICONNECTION_CONFIG_PATH, "rb") as f:
+            config = tomllib.load(f)
         
+        # merge the 2 configs from the service 
+        config.update(formsConfig)
+        config.update(serviceConfig)
+        return config
+
     def listen_to_connector(self):
         # start a thread to listen to the connector fifo
         with open(self.config["serviceUIconnector_fifo_path"], "r") as f:
@@ -65,31 +71,34 @@ class serviceUIconnector(threading.Thread):
     def quit(self):
         self.quitRequested = True
 
-    def __init__(self,config_file:str|None):
+    def __init__(self,serviceConfig:dict[str,Any],formsConfig:dict[str,Any]):
         super().__init__()
         # Read config file
-        
-        self.config = self.load_config(config_file) 
-        
+        self.config = self.merge_configs(serviceConfig,formsConfig) 
+
 
         self.service_list_display = []
         self.text_inputs = []
         self.text_blocks = []
         self.quitRequested = False
-        if not os.path.exists(self.config["serviceUIconnector_fifo_path"]):
-            dirname = os.path.dirname(self.config["serviceUIconnector_fifo_path"])
-            os.makedirs(dirname, exist_ok=True)            
-            os.mkfifo(self.config["serviceUIconnector_fifo_path"])
+        fifo_dir_name = self.config.get("serviceUIconnector_fifo_basepath", tempfile.gettempdir())
+        fifo_file_name = self.config["service_name"] + "_connector.fifo"
+        fifo_full_path = os.path.join(fifo_dir_name, fifo_file_name)
+        if not os.path.exists(fifo_full_path):
+            os.makedirs(fifo_dir_name, exist_ok=True)            
+            os.mkfifo(fifo_full_path)
 
-        
 
-def start_serviceUIconnector(config_file:str|None=None):
+def start_serviceUIconnector(serviceConfig:dict[str,Any],formsConfig:dict[str,Any]):
     # start serviceUIconnector asyc in a thread.
     # call app.quit() to stop it. 
-    app = serviceUIconnector(config_file)
+    app = serviceUIconnector(serviceConfig,formsConfig)
     app.start()
     return app
 
+
+
+
 if __name__ == "__main__":
-    app = start_serviceUIconnector()
+    app = start_serviceUIconnector({}, {})
 

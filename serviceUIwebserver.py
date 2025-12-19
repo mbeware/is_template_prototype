@@ -1,6 +1,6 @@
+import tomllib
 from flask import Flask, render_template,render_template_string, request, redirect
-from config_loader import load_ui_config
-from ui_renderer import prepare_context
+
 import threading
 import os
 import json
@@ -8,6 +8,11 @@ import time
 import serviceUIinterface
 from typing import Any
 import datetime
+
+
+serviceUIwebserver_path = os.path.dirname(os.path.abspath(__file__))
+CONFIG_PATH = os.path.join(serviceUIwebserver_path, "config", "ui.toml") # in <thismodule>/config/serviceUIwebserver.toml
+
 
 def selectServiceForm(service_list=None)-> dict[str,Any]:
     if not service_list:
@@ -26,8 +31,8 @@ def selectServiceForm(service_list=None)-> dict[str,Any]:
 class serviceUIregister(threading.Thread):
     def __init__(self):
         super().__init__() 
-        print("init serviceUIregister")
-        self.config = load_ui_config()
+        self.config=self.load_config(CONFIG_PATH)
+        self.message_received = False
         self.service_list:dict[str,str]={}
         self.service_list_display:dict[str,Any]={"title":"Services","choices":[]}
         self.quitRequested = False
@@ -37,6 +42,14 @@ class serviceUIregister(threading.Thread):
             dirname = os.path.dirname(self.config["fifo_path"])
             os.makedirs(dirname, exist_ok=True)
             os.mkfifo(self.config["fifo_path"])
+
+    def load_config(self,config_path:str)->dict[str,Any]:
+        try:
+            with open(config_path, "rb") as f:
+                return tomllib.load(f)
+        except Exception as e:
+            print(f"Error loading config file '{config_path}': {e}")
+            exit(1)
 
     def define_actions(self)-> dict:
         actions: dict = {"Default": lambda x: print("Default action called")}        
@@ -172,8 +185,13 @@ LIVE_LOGS = ["Booting...", "Loading modules...", "Ready."]
 #
 def localtest_getMainForm(service:str, formid:str):
     form:dict[str,Any] = {}
-
-    formdef = load_ui_config("config/demoUI.toml")
+   
+    try:
+        with open("config/demoUIForms.toml", "rb") as f:
+            formdef = tomllib.load(f)
+    except Exception as e:
+        formdef:dict[str,Any]={}
+        
     form["service"]=service
     form["type"]=formdef[formid]["type"]
     form["formid"] = formdef[formid]["formid"]

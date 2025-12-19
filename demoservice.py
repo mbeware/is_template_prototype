@@ -1,4 +1,7 @@
+import tomllib
+from typing import Any
 import serviceUIconnector
+
 #from threading import Thread
 from time import sleep
 
@@ -15,10 +18,25 @@ class demo():
 
 demoapp = demo()
 
+
+def load_config(config_path:str)->dict[str,Any]:
+    try:
+        with open(config_path, "rb") as f:
+            return tomllib.load(f)
+    except Exception as e:
+        print(f"Error loading config file '{config_path}': {e}")
+        exit(1)
+
+    
+
 def main():
     global demoapp
     #start serviceUIconnector in a thread
-    serviceUIconnectorApp = serviceUIconnector.start_serviceUIconnector("config/connector.toml")
+    # load config and menu
+    service_config = load_config("config/demoUIconfig.toml")
+    forms_config = load_config("config/demoUIforms.toml")
+
+    serviceUIconnectorApp = serviceUIconnector.start_serviceUIconnector(service_config,forms_config)
     quit = False
     
 
