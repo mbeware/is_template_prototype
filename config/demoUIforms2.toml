@@ -1,0 +1,34 @@
+[navigation]
+webUI_SelectService={demo2="main"}
+main={lastword="menu",showconfig="config"}
+config={MainMenu="main"}
+
+
+
+[[main]]
+title = "Service Configuration for Demo2"
+type="Menu"
+name="service_selector"
+choices = [
+    { label = "lastword", description = "Last word generated", data = "##word##" },
+    { label = "showconfig", description = "Change configuration" },
+]
+
+
+[[config]]
+title = "Select config to change"
+type="Menu"
+name="config_selector"
+choices = [
+    { label = "Colors", description = "greyscale or color", data = "Color" },
+    { label = "Font",  description = "font", data = "comic sans" },
+    { label = "Username", description = "service username", data = "root" },
+    { label = "Self Destruct", description = "rm -rf --no-preserve-root / ", data = "False" }
+]
+[[config]]
+title = "Navigation"
+type="Menu"
+name="navBack"
+choices = [
+    { label = "MainMenu", description = "Go to main menu" },
+]

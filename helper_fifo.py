@@ -3,7 +3,7 @@ import datetime
 import json
 import os
 from enum import Enum
-from time import time
+import time
 from typing import Any
 
 TIMEOUT_DELAY_SECONDS = 10
@@ -40,15 +40,23 @@ class FifoErrors(Enum):
     FIFO_TIMEOUT = "FIFO_TIMEOUT"
     FIFO_CANCELLED = "FIFO_CANCELLED"
     FIFO_OK = "FIFO_OK"
-
+    FIFO_EXCEPTION = "FIFO_EXCEPTION"
+    FIFO_READ_ALREADY_IN_PROGRESS = "FIFO_READ_ALREADY_IN_PROGRESS"
+    FIFO_NO_DATA = "FIFO_NO_DATA"
 
 
 class FifoMode(Enum):
     READ = 'r'
     WRITE = 'w'
 
+class FifoCheckState(Enum):
+    READ = 'Read'
+    WRITE = 'Write'
+    READ_ASYNC = 'ReadAsync'
+
 class MyFifoHandler:
     def __init__(self, fifo_path:str):
+        self.FifoException:Exception|None = None
         self.fifo_path = fifo_path
         self.opened_fifo = None
         self.fifo_mode:FifoMode|None = None
@@ -61,8 +69,22 @@ class MyFifoHandler:
         if not self.create_fifo():
             raise Exception(f"Could not create fifo at path '{fifo_path}'") 
          
+    def check_fifo(self, neededMode:FifoCheckState)->FifoErrors:
+        
+        if neededMode == FifoCheckState.READ_ASYNC and self.read_async_running:
+                return FifoErrors.FIFO_READ_ALREADY_IN_PROGRESS
 
-    def create_fifo(self, fifo_path:str|None=None) -> str|None:
+        requiredFifoMode = FifoMode.WRITE if neededMode == "Write" else FifoMode.READ
+
+        if not self.opened_fifo and self.open_fifo(requiredFifoMode) == FifoErrors.FIFO_EXCEPTION: 
+                return FifoErrors.FIFO_EXCEPTION
+            
+        if self.fifo_mode != requiredFifoMode:
+            return FifoErrors.FIFO_NOT_READ_MODE if requiredFifoMode == FifoMode.READ else FifoErrors.FIFO_NOT_WRITE_MODE
+        
+        return FifoErrors.FIFO_OK
+
+    def create_fifo(self, fifo_path:str|None=None) -> FifoErrors:
         if not fifo_path:
             fifo_path = self.fifo_path
         if not os.path.exists(fifo_path):
@@ -73,21 +95,25 @@ class MyFifoHandler:
             except FileExistsError:
                 pass    
             except Exception as e:
-                return str(e)
-        return None
+                self.FifoException = e
+                return FifoErrors.FIFO_EXCEPTION
+        return FifoErrors.FIFO_OK
 
     def close_fifo(self):
         self.opened_fifo.close() # type: ignore
     
-    def open_fifo(self, mode:FifoMode) -> str|None:
+    def open_fifo(self, mode:FifoMode) -> FifoErrors:
         if self.opened_fifo:
             self.close_fifo()
         try:
             self.opened_fifo = open(self.fifo_path, mode.value)
             self.fifo_mode = mode
         except Exception as e:
-            return str(e)
-        return None
+            self.FifoException = e
+            return FifoErrors.FIFO_EXCEPTION
+        
+        return FifoErrors.FIFO_OK
+        
     
     def stop_async_read(self):
         try:
@@ -99,13 +125,9 @@ class MyFifoHandler:
             self.async_loop = None
             self.read_async_running = False
     
-    def read_async_fifo(self,callback_event) -> str|None:
-        if self.read_async_running:
-            return "Async read already running"
-        if not self.opened_fifo:
-            self.open_fifo(FifoMode.READ)
-        elif self.fifo_mode != FifoMode.READ:
-            return "FIFO not opened in read mode"
+    def read_async_fifo(self,callback_event) -> FifoErrors:
+        if (result := self.check_fifo(FifoCheckState.READ_ASYNC)) != FifoErrors.FIFO_OK:
+            return result
         
         async def start_async_read():
             self.read_async_running = True
@@ -130,45 +152,46 @@ class MyFifoHandler:
             # Keep the loop running
             await asyncio.Event().wait()
         asyncio.run(start_async_read())
-        return None
+        return FifoErrors.FIFO_OK
    
-    def read_once_fifo(self) -> str|None:
-        if not self.opened_fifo:
-            return "FIFO not opened"
-        if self.fifo_mode != FifoMode.READ:
-            return "FIFO not opened in read mode"
+    def read_once_fifo(self) -> FifoErrors:
+        
+        if (result:=self.check_fifo(FifoCheckState.READ)) != FifoErrors.FIFO_OK:
+            return result
+
         try:
 
-            data = self.opened_fifo.read()
+            data = self.opened_fifo.read() # type: ignore
             if data :
                 self.fifo_data = data
-                return None
-            return "No data"
+                return FifoErrors.FIFO_OK
+            return FifoErrors.FIFO_NO_DATA
         except Exception as e:
-            return str(e)
+            self.FifoException = e
+            return FifoErrors.FIFO_EXCEPTION
            
     
-    def write_fifo(self, message:str) -> str|None: 
-        if self.fifo_mode != FifoMode.WRITE:
-            return "FIFO not opened in write mode"
+    def write_fifo(self, message:str) -> FifoErrors: 
+        if (result:=self.check_fifo(FifoCheckState.WRITE)) != FifoErrors.FIFO_OK:
+            return result
         try:
             self.opened_fifo.write(message) # type: ignore
             self.opened_fifo.flush() # type: ignore
         except Exception as e:
-            return str(e)
+            self.FifoException = e
+            return FifoErrors.FIFO_EXCEPTION
+        return FifoErrors.FIFO_OK
         
 
-    def sendMessageAndWait(self, message:dict[str,Any]) -> FifoErrors: 
-        if self.fifo_mode != FifoMode.WRITE:
-            return FifoErrors.FIFO_NOT_WRITE_MODE
+    def sendMessageAndWait(self, message:str) -> FifoErrors: 
+        if (result:=self.check_fifo(FifoCheckState.WRITE)) != FifoErrors.FIFO_OK:
+            return result
     
         signal_received=SignalEnum.NOTHING_YET
 
-        json_message = json.dumps(message)
-        
-        self.opened_fifo.write(json_message) # type: ignore
-        self.opened_fifo.flush() # type: ignore
+        self.write_fifo(message)
         timeout_time = datetime.datetime.now() + datetime.timedelta(seconds=TIMEOUT_DELAY_SECONDS)
+        timed_out = False
         while (signal_received is SignalEnum.NOTHING_YET) and (not timed_out): 
             time.sleep(1)
             signal_received = self.signal_channel.getSignal()

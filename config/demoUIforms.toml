@@ -1,11 +1,36 @@
+[navigation]
+webUI_SelectService={demo="main"}
+main={NbLoop="menu",showconfig="config"}
+config={MainMenu="main"}
+
+
+
+[[main]]
+title = "Service Configuration for Demo"
+type="Menu"
+name="service_selector"
+choices = [
+    { label = "NbLoop", description = "Number of loops since started", data = "##nbLoops##" },
+    { label = "showconfig", description = "Change configuration" },
+]
+
 
 [[config]]
 title = "Select config to change"
+type="Menu"
+name="config_selector"
 choices = [
     { label = "start_on_boot", description = "Start the service after boot", data = "True" },
     { label = "logs_path",  description = "Logs path", data = "/var/app/logs" },
     { label = "download_logs", description = "Download logs", data = "False" },
     { label = "Restart_at_midnight", description = "Auto restart the service at midnight", data = "True" }
+]
+[[config]]
+title = "Navigation"
+type="Menu"
+name="navBack"
+choices = [
+    { label = "MainMenu", description = "Go to main menu" },
 ]
 
 [[menu]]

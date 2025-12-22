@@ -1,2 +1,6 @@
-fifo_path = "/tmp/serviceUI/register_service.fifo"
+register_fifo_path = "/tmp/serviceUI/register_service.fifo"
+response_fifo_path = "/tmp/serviceUI/response.fifo"
 serviceUIconnector_fifo_basepath = "/tmp/serviceUI/"
+WEBUISERVICE = "webUI"
+WEBUIFORMID = "webUI_SelectService"
+WEBUIBACKTOSELECT = "webUI_BackToSelect"
