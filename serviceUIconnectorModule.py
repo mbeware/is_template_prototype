@@ -1,26 +1,23 @@
+import serviceUIinterface as sUIi
+from serviceUIlogging import webUIlogger
 
 import json
 from typing import Any
-import tomllib
+import tomli as tomllib 
 import threading
 import time
 import os
 import tempfile
-from contextlib import contextmanager
-import copy 
-import logging as servicelogging
 
-servicelogging.basicConfig(level=servicelogging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
-servicelogger = servicelogging.getLogger('serviceUIconnector')
+import copy 
+
 
 SERVICEUICONNECTION_CONFIG_PATH = "config/serviceUIconnector.toml"
 
 
-
-
 class serviceUIconnector(threading.Thread):
 
-    def register_service(self,service_name:str|None=None):
+    def old_register_service(self,service_name:str|None=None):
         
         # Register the service in the serviceUIwebserver FIFO.
         # get the fifo path from the config file
@@ -38,7 +35,28 @@ class serviceUIconnector(threading.Thread):
         with open(webServerFifoPath, "w") as f:
             f.write(f'{{"service_name":"{service_name}","action":"Register","connectorFifoPath":"{self.serviceFifo_path}"}}')
         print(f"[Service '{service_name}' registered with connector fifo at '{self.serviceFifo_path}'")
+
+    def register_service(self,service_name:str|None=None):
         
+        # Register the service in the serviceUIwebserver FIFO.
+        # get the fifo path from the config file
+        if not service_name:
+            service_name = self.config["service_name"]
+
+        webServerFifoPath = self.config["register_fifo_path"]  
+        
+        registerMessage=sUIi.RegisterMessageToUI(service_name,
+                                                 sUIi.ActionType.Register,
+                                                 webServerFifoPath)
+        # write message to webServerFifoPath
+        webUIlogger.info(f"want to register [Service '{service_name}' with connector fifo at '{self.serviceFifo_path}'")
+        
+        with open(webServerFifoPath, "w") as f:
+            print(f"{registerMessage.to_json()}")
+            f.write(registerMessage.to_json())
+        print(f"[Service '{service_name}' registered with connector fifo at '{self.serviceFifo_path}'")
+
+
     def merge_configs(self,serviceConfig:dict[str,Any],formsConfig:dict[str,Any])->dict[str,Any]:
         # Load the configuration from a file or other source.
         config = {}
@@ -57,7 +75,7 @@ class serviceUIconnector(threading.Thread):
                 # Read message from fifo (this is blocking)
                 message = f.read()
                 if message != "":
-                    servicelogger.debug(f"[FR] Message reçu: {message}")
+                    #print(f"[FR] Message reçu: {message}")
                     # Process message
                     self.handle_messages(message)
                 time.sleep(0.1)
@@ -67,7 +85,7 @@ class serviceUIconnector(threading.Thread):
         message_dict = json.loads(message)
         sourceform = message_dict["formid"]
         sourcewidget_type = message_dict["widget_type"]
-        sourcewidget_name = message_dict["widget_name"]
+
         data = ""
         if sourcewidget_type == "menu" :
             data = message_dict["choice"]
@@ -97,9 +115,9 @@ class serviceUIconnector(threading.Thread):
                             if True or infoFunction in globals():
                                 form["widgets"][widgetid]["choices"][choiceid]["data"] = str(self.infoProviders[infoProvider]())
                             else:
-                                raise NameError(f"infoProvider not defined in globals() : form:[{newformname}] widget:[{widget_name}] choice:[{choice["label"]}] infoProvider key:({infoProvider})infoProvider function:[{infoFunction}]") 
+                                raise NameError(f"infoProvider not defined in globals() : form:[{newformname}] widget:[{widget_name}] choice:[{choice['label']}] infoProvider key:({infoProvider})infoProvider function:[{infoFunction}]") 
                         else: 
-                            raise NameError(f"infoProvider not registered : form:[{newformname}] widget:[{widget_name}] choice:[{choice["label"]}] infoProvider:[{infoProvider}]") 
+                            raise NameError(f"infoProvider not registered : form:[{newformname}] widget:[{widget_name}] choice:[{choice['label']}] infoProvider:[{infoProvider}]") 
 
         response_message:dict[str,Any|str]={}
         response_message = {"form": form}

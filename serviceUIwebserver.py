@@ -1,13 +1,13 @@
-import tomllib
+import tomli as tomllib
 from flask import Flask, render_template,render_template_string, request, redirect
 
 import threading
 import os
 import json
-import time
-import serviceUIinterface
+
+
 from typing import Any
-import datetime
+
 import queue
 from select import select
 import colorist
@@ -15,7 +15,7 @@ import functools
 import copy
 
 import logging
-logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %(message)s')
 logger = logging.getLogger('serviceWebUI')
 
 
@@ -112,12 +112,9 @@ class serviceUIregister(threading.Thread):
     def action_update_form(self,dict_message:dict[str,Any]):
         # if action==Register message will also contain the following key:
         #           form:"<fully formed form>"
-        #           route:"<route>"
 
         app.currentFormid = dict_message["form"]["formid"]
         app.currentForm = dict_message["form"]
-        #app.received_route = dict_message["route"]
-        self.message_received = True
     @print_f_name
     def action_unregister(self,dict_message:dict[str,Any]):
         # if action==Unregister message will also contain the following key:
@@ -188,16 +185,10 @@ class serviceUIregister(threading.Thread):
 
 
     @print_f_name
-    def run(self):
+    def run(self): #register loop
         logger.info(f"Start listening on fifo at {self.config['register_fifo_path']}")
         while not self.quitRequested:
-            #send pending messages
-            #while not self.queue.empty():
-            #        self.sendMessage(self.queue.get())
-
             
-             
-            #json_message = self.waitfor_message(self.config['register_fifo_path']) if not None else ""
             json_message = self.waitfor_message_with_timeout(self.config['register_fifo_path'],self.config['register_fifo_timeout']) if not None else ""
 
             if json_message != "":
@@ -382,7 +373,7 @@ def text_input_action():
 @app.route("/refresh_block")
 @print_f_name
 def refresh_block():
-    idx = int(request.args.get("index", 1))
+    idx = int(request.args.get("index", 1))  # noqa: F841
     # TODO: read actual logs from service FIFO
     return "\n".join(LIVE_LOGS)
 

@@ -1,6 +1,21 @@
 # serviceUIinterface.py
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, asdict
+from dataclasses_json import dataclass_json
 from enum import Enum
+import json
+
+
+
+
+###################################
+#
+# communication flow : 
+# 
+# 1. Service register itself to the serviceUIwebserver with a fifopipe to send information request. 
+# 2. serviceUIwebserver send a request to the service with the information about the widget it wants to display.
+# 3. Service return the information and the widget in json
+# 4. Loop to 2. 
+#
 
 def buildForm(form):
     pass
@@ -38,19 +53,24 @@ class ActionType(Enum):
     Unregister="Unregister"
     UpdateForm="UpdateForm"
 
+@dataclass_json
 @dataclass
 class BaseMessageToUI:
     service_name:str 
     action: ActionType
     def is_valid(self) -> bool: 
         return bool(self.action) and bool(self.service_name) and self.action in ActionType
+    def to_json(self) -> str:
+        json
+        return json.dumps(asdict(self))
         
-
+@dataclass_json
 @dataclass
 class RegisterMessageToUI(BaseMessageToUI):
     connectorFifoPath:str # path to connector fifo
     def is_valid(self) -> bool:
         return bool(self.connectorFifoPath) and super().is_valid()
+        
 @dataclass
 class UpdateFormMessageToUI(BaseMessageToUI):
     form: Form
@@ -62,7 +82,7 @@ class UnregisterMessageToUI(BaseMessageToUI):
     pass    
 
 @dataclass
-class MessageFromUI:
+class MessageToService:
     service: str # service name (should match the service name of the recipient)
     formid: str # form with the activated widget
     widget_name: str # name of the widget activated
